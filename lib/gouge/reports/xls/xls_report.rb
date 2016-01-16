@@ -1,8 +1,8 @@
 # =============================================================================
-# Copyright (c) 2013 All Right Reserved, http://starqle.com/
+# Copyright (c) 2010-2016 All Right Reserved, http://starqle.com/
 #
 # This source is subject to the Starqle Permissive License.
-# Please see the License.txt file for more information.
+# Please see the LICENSE.txt file for more information.
 # All other rights reserved.
 #
 # THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
@@ -10,7 +10,7 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/reports/xls/xls_report.rb
+# @file_name lib/gouge/reports/xls/xls_report.rb
 # @author Raymond Ralibi
 # @email ralibi@starqle.com
 # @company PT. Starqle Indonesia

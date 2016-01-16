@@ -1,8 +1,8 @@
 # =============================================================================
-# Copyright (c) 2015 All Right Reserved, http://starqle.com/
+# Copyright (c) 2010-2016 All Right Reserved, http://starqle.com/
 #
 # This source is subject to the Starqle Permissive License.
-# Please see the License.txt file for more information.
+# Please see the LICENSE.txt file for more information.
 # All other rights reserved.
 #
 # THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
@@ -10,11 +10,11 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name app/models/exceptions/app_not_found_exception.rb
+# @file_name lib/gouge/exceptions/app_not_found_exception.rb
 # @author Giovanni Sakti
 # @email giosakti@starqle.com
 # @company PT. Starqle Indonesia
-# @note This file contains AppNotFoundException
+# @note AppNotFoundException class
 # =============================================================================
 
 class AppNotFoundException < Exception

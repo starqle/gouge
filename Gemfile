@@ -1,3 +1,24 @@
+# =============================================================================
+# Copyright (c) 2010-2016 All Right Reserved, http://starqle.com/
+#
+# This source is subject to the Starqle Permissive License.
+# Please see the LICENSE.txt file for more information.
+# All other rights reserved.
+#
+# THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+# KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+# PARTICULAR PURPOSE.
+#
+# @file_name Gemfile
+# @author Giovanni Sakti
+# @email giosakti@starqle.com
+# @company PT. Starqle Indonesia
+# @note Gemfile that includes common dependencies.
+#   WARNING: ADDING, REMOVING OR MODIFYING IS PROHIBITED.
+#   CONTACT YOUR SUPERIOR FOR MORE INFORMATION.
+# =============================================================================
+
 source 'https://rubygems.org'
 
 # Declare your gem's dependencies in gouge.gemspec.
