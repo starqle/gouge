@@ -15,9 +15,10 @@ Gem::Specification.new do |s|
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "LICENSE.txt", "Rakefile", "README.md"]
-  s.test_files = Dir["test/**/*"]
+  s.test_files = Dir["spec/**/*"]
 
   s.add_dependency "rails", "~> 4.2.5"
 
+  s.add_development_dependency "rspec", "~> 3.4.0"
   s.add_development_dependency "sqlite3"
 end
