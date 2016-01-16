@@ -10,20 +10,14 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/gouge.rb
+# @file_name lib/gouge/report_generators/xls.rb
 # @author Giovanni Sakti
 # @email giosakti@starqle.com
 # @company PT. Starqle Indonesia
-# @note Gouge
+# @note Load all xls report generators
 # =============================================================================
 
-require 'gouge/core_ext/boolean_typecast'
-require 'gouge/exceptions/all'
-require 'gouge/grid_processor'
-require 'gouge/recurring_event'
-require 'gouge/report_generators/xls'
-require 'gouge/shql'
-require 'gouge/sortable_tree'
-
-module Gouge
-end
+require 'gouge/report_generators/xls_composer'
+require 'gouge/report_generators/xls_report'
+require 'gouge/report_generators/xls_segment'
+require 'gouge/report_generators/xls_style'
