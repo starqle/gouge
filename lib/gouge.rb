@@ -17,6 +17,9 @@
 # @note Gouge
 # =============================================================================
 
+require 'active_record'
+require 'active_support/concern'
+
 require 'gouge/action_controller/concerns/all'
 require 'gouge/active_model/concerns/all'
 require 'gouge/core_ext/boolean_typecast'

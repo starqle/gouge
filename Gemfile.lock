@@ -3,6 +3,7 @@ PATH
   specs:
     gouge (0.8.0)
       rails (~> 4.2.5)
+      spreadsheet (~> 1.1.1)
 
 GEM
   remote: https://rubygems.org/
@@ -101,6 +102,9 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
+    ruby-ole (1.2.12)
+    spreadsheet (1.1.1)
+      ruby-ole (>= 1.0)
     sprockets (3.5.2)
       concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
