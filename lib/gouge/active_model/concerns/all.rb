@@ -10,12 +10,14 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/gouge/exceptions/all.rb
+# @file_name lib/gouge/active_model/concerns/all.rb
 # @author Giovanni Sakti
 # @email giosakti@starqle.com
 # @company PT. Starqle Indonesia
-# @note Load all exception classes
+# @note Load all active model concerns
 # =============================================================================
 
-require 'gouge/exceptions/app_not_found_exception'
-require 'gouge/exceptions/login_required_exception'
+require 'gouge/active_model/concerns/notification'
+require 'gouge/active_model/concerns/realm'
+require 'gouge/active_model/concerns/token_authenticable'
+require 'gouge/active_model/concerns/user_stamp'

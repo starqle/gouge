@@ -17,6 +17,7 @@
 # @note Gouge
 # =============================================================================
 
+require 'gouge/active_model/concerns/all'
 require 'gouge/core_ext/boolean_typecast'
 require 'gouge/exceptions/all'
 require 'gouge/grid_processor'
