@@ -2,7 +2,7 @@
 # Copyright (c) 2010-2016 All Right Reserved, http://starqle.com/
 #
 # This source is subject to the Starqle Permissive License.
-# Please see the License.txt file for more information.
+# Please see the LICENSE.txt file for more information.
 # All other rights reserved.
 #
 # THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
@@ -10,25 +10,12 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/gouge/active_model/concerns/realm.rb
+# @file_name lib/gouge/action_controller/concerns/all.rb
 # @author Giovanni Sakti
 # @email giosakti@starqle.com
 # @company PT. Starqle Indonesia
-# @note Gouge::Realm concern
+# @note Load all action controller concerns
 # =============================================================================
 
-module Gouge
-  module Realm
-    extend ::ActiveSupport::Concern
-
-    included do
-      validates :app_id, presence: true
-      belongs_to :app
-      scope :app_scoped, -> { where(app_id: ::Fulcrum::App.current_app_id) }
-    end
-
-    module ClassMethods
-      # nop
-    end
-  end
-end
+require 'gouge/action_controller/concerns/base_api'
+require 'gouge/action_controller/concerns/token_authentication'
