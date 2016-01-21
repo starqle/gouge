@@ -251,6 +251,6 @@ class ActiveRecord::Base
     validates_presence_of :repeat_every_n_months, if: :repeat_every_n_months?
     validates_presence_of :repeat_every_n_years, if: :repeat_every_n_years?
     validates_presence_of :repeat_every_days_of_week, if: :repeat_every_days_of_week?
-    include RecurringEvent
+    include ::Gouge::RecurringEvent
   end
 end

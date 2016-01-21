@@ -69,6 +69,6 @@ end
 
 class ActiveRecord::Base
   def self.acts_as_xls_report(options = {})
-    include Gouge::XlsReport
+    include ::Gouge::XlsReport
   end
 end

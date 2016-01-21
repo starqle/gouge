@@ -143,6 +143,6 @@ class ActiveRecord::Base
   def self.acts_as_sortable_tree(options = {})
     cattr_accessor :sequence
     self.sequence = options[:sequence].try(:to_sym) || false
-    include SortableTree
+    include ::Gouge::SortableTree
   end
 end
