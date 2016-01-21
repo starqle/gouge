@@ -51,12 +51,17 @@ module Gouge
       # Notice how we use Devise.secure_compare to compare the token
       # in the database with the token given in the params, mitigating
       # timing attacks.
-      if user && ::Devise.secure_compare(user.authn_token, params[:authn_token])
+      if user &&
+        ::Devise.secure_compare(user.authn_token, params[:authn_token]) &&
+        DateTime.current < (user.current_sign_in_at + Devise.timeout_in)
+
         # Notice we are passing store false, so the user is not
         # actually stored in the session and a token is needed
         # for every request. If you want the token to work as a
         # sign in token, you can simply remove store: false.
-        # sign_in user, store: false
+        sign_in user, store: false
+
+        # Set current user
         @current_user = user
       else
         # TODO: @giosakti investigate better behaviour for authentication during
