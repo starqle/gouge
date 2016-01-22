@@ -28,97 +28,110 @@ module Gouge
       #   {
       #     id: d.id,
       #     parent_id: a.id,
-      #     index: ...,
+      #     dest_seq: ...
       #   },
       #   {
       #     id: d.id,
       #     parent_id: b.id,
-      #     index: ...,
+      #     dest_seq: ...
       #   },
       #   {
       #     id: c.id,
       #     parent_id: nil,
-      #     index: ...,
+      #     dest_seq: ...
       #   },
       #   {
       #     id: a.id,
       #     parent_id: d.id,
-      #     index: ...,
+      #     dest_seq: ...
       #   }
       # ]
       def execute_movements(movements)
         ActiveRecord::Base.transaction do
-          if sequence
+          if sortable_tree_sequence
             movements.each do |movement|
               item = find(movement[:id])
 
               # Origin related variables
-              ori_idx = item[sequence]
-              ori_parent_id = item.parent_id
-              ori_siblings = item.siblings
+              src_parent_id = item.parent_id
+              src_seq = item[sortable_tree_sequence]
+              src_siblings = item.siblings
 
               # Destination related variables
-              dst_idx = movement[:index].to_i
-              dst_parent_id = movement[:parent_id]
+              dest_parent_id = movement[:parent_id]
+              dest_seq = movement[:dest_seq].to_i
 
               # Assign dummy seq to avoid uniqueness on ancestry
-              item[sequence] = dst_idx + count + 1
-              item.parent_id = dst_parent_id
-              item.save!
+              item.update!(
+                parent_id: dest_parent_id,
+                "#{sortable_tree_sequence}" => dest_seq + self.count + 1
+              )
 
-              if ori_parent_id == dst_parent_id
-                # Movement within the same parent (siblings)
-                siblings = ori_siblings.where{__send__(my{sequence}).gteq( my{[ori_idx, dst_idx].min} ) & __send__(my{sequence}).lteq( my{[ori_idx, dst_idx].max} )}.all.sort!{|a, b| a[sequence] <=> b[sequence]}
+              # Move within same parent (siblings)
+              if src_parent_id == dest_parent_id
+                siblings = src_siblings
+                  .where("""
+                    #{item.class.table_name}.#{sortable_tree_sequence} > #{[src_seq, dest_seq].min}
+                    AND #{item.class.table_name}.#{sortable_tree_sequence} < #{[src_seq, dest_seq].max}
+                  """)
+                  .to_a
+                  .sort!{ |a, b| a[sortable_tree_sequence] <=> b[sortable_tree_sequence]}
 
-                if dst_idx > ori_idx
+                if dest_seq > src_seq
                   siblings.each do |sibling|
-                    sibling[sequence] = sibling[sequence] - 1
-                    sibling.save!
+                    sibling.update!(
+                      "#{sortable_tree_sequence}" => sibling[sortable_tree_sequence] - 1)
                   end
                 else
                   siblings.reverse.each do |sibling|
-                    sibling[sequence] = sibling[sequence] + 1
-                    sibling.save!
+                    sibling.update!(
+                      "#{sortable_tree_sequence}" => sibling[sortable_tree_sequence] + 1)
                   end
                 end
+              else # Move to different parent
+                # Re-arrange source siblings
+                siblings = src_siblings
+                  .where("""
+                    #{item.class.table_name}.id != '#{item.id}'
+                    AND #{item.class.table_name}.#{sortable_tree_sequence} > #{src_seq}
+                  """)
+                  .to_a
+                  .sort!{|a, b| a[sortable_tree_sequence] <=> b[sortable_tree_sequence]}
 
-              else
-                # Move to different parent
-
-                # Re-arrange origin siblings
-                siblings = ori_siblings.where{id.not_eq( my{item.id} ) & __send__(my{sequence}).gteq( my{ori_idx} )}.to_a.sort!{|a, b| a[sequence] <=> b[sequence]}
                 siblings.each do |sibling|
-                  sibling[sequence] = sibling[sequence] - 1
-                  sibling.save!
+                  sibling.update!(
+                    "#{sortable_tree_sequence}" => sibling[sortable_tree_sequence] - 1)
                 end
 
                 # Re-arrange destination siblings
-                dst_siblings = item.siblings
-                siblings = dst_siblings.where{id.not_eq( my{item.id} ) & __send__(my{sequence}).gteq( my{dst_idx} )}.to_a.sort!{|a, b| a[sequence] <=> b[sequence]}
+                dest_siblings = item.siblings
+                siblings = dest_siblings
+                  .where("""
+                    #{item.class.table_name}.id != '#{item.id}'
+                    AND #{item.class.table_name}.#{sortable_tree_sequence} > #{dest_seq}
+                  """)
+                  .to_a
+                  .sort!{|a, b| a[sortable_tree_sequence] <=> b[sortable_tree_sequence]}
+
                 siblings.reverse.each do |sibling|
-                  sibling[sequence] = sibling[sequence] + 1
-                  sibling.save!
+                  sibling.update!(
+                    "#{sortable_tree_sequence}" => sibling[sortable_tree_sequence] + 1)
                 end
               end
 
-              # Assign item with real destination index
-              item[sequence] = dst_idx
-              item.save!
+              # Assign real seq
+              item.update!("#{sortable_tree_sequence}" => dest_seq)
             end
           else
             movements.each do |movement|
               item = find(movement[:id])
-              item.parent_id = movement[:parent_id]
-              item.save!
+              item.update!(parent_id: movement[:parent_id])
             end
           end
         end
       end
     end
 
-    #
-    # INSTANCE METHOD
-    #
     def update_with_movement!(params)
       ActiveRecord::Base.transaction do
         # Update attrbute except parent_id (it will be updated later)
@@ -126,10 +139,15 @@ module Gouge
 
         # Execute movement if parent_id is changed
         unless params[:parent_id].eql? self.parent_id
+          if params[:parent_id]
+            dest_seq = self.class.find(params[:parent_id]).children.count
+          else
+            dest_seq = self.class.roots.count
+          end
           self.class.execute_movements([{
             id: self.id,
             parent_id: params[:parent_id],
-            index: self.class.find_by(id: params[:parent_id]).try(:children).try(:count) || self.class.roots.count
+            dest_seq: dest_seq
           }])
         end
 
@@ -141,8 +159,8 @@ end
 
 class ActiveRecord::Base
   def self.acts_as_sortable_tree(options = {})
-    cattr_accessor :sequence
-    self.sequence = options[:sequence].try(:to_sym) || false
+    cattr_accessor :sortable_tree_sequence
+    self.sortable_tree_sequence = options[:sequence].try(:to_sym)
     include ::Gouge::SortableTree
   end
 end
