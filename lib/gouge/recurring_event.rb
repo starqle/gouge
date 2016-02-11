@@ -21,40 +21,44 @@ module Gouge
   module RecurringEvent
     extend ActiveSupport::Concern
 
-    NO_REPEAT = 1
-    REPEAT_TYPE_EVERY_N_DAYS = 2
-    REPEAT_TYPE_EVERY_N_WEEKS = 3
-    REPEAT_TYPE_EVERY_N_MONTHS = 4
-    REPEAT_TYPE_EVERY_N_YEARS = 5
-    REPEAT_TYPE_EVERY_DAYS_OF_WEEK = 6
-    REPEAT_TYPES = [
-      {id: NO_REPEAT, name: "No repeat"},
-      {id: REPEAT_TYPE_EVERY_N_DAYS, name: "Every n days"},
-      {id: REPEAT_TYPE_EVERY_N_WEEKS, name: "Every n weeks"},
-      {id: REPEAT_TYPE_EVERY_N_MONTHS, name: "Every n months"},
-      {id: REPEAT_TYPE_EVERY_N_YEARS, name: "Every n years"},
-      {id: REPEAT_TYPE_EVERY_DAYS_OF_WEEK, name: "Every days of week"}
-    ]
+    MINUTE_IN_SECONDS = 60
+    HOUR_IN_SECONDS = MINUTE_IN_SECONDS * 60
+    DAY_IN_SECONDS = HOUR_IN_SECONDS * 24
+    WEEK_IN_SECONDS = DAY_IN_SECONDS * 7
+    RECURRENCE_TYPES = %w(
+      NO_RECURRENCE
+      EVERY_N_DAYS
+      EVERY_N_WEEKS
+      EVERY_N_MONTHS
+      EVERY_N_YEARS
+      EVERY_DAYS_OF_WEEK
+    )
+
+    included do
+      validates :recurrence_type,
+        presence: true,
+        inclusion: { in: RECURRENCE_TYPES }
+    end
 
     module ClassMethods
-      # Check whether array of events conflict with each others.
+      # Check whether array of events conflict with each other.
       # @param events [Object] array of events to be checked
       def find_conflicted_events(events)
         arr = []
-        events.sort!{|a, b| a[:start_time] <=> b[:start_time]}
-        events.each_with_index do |event, i|
-          if (i+1) < events.size
-            next_event = events[i+1]
-            if event[:end_time] > next_event[:start_time]
-              conflict_start_time = next_event[:start_time]
-              conflict_end_time = [event[:end_time], next_event[:end_time]].min
+        events.sort!{|a, b| a[:from_time_in_secs] <=> b[:from_time_in_secs]}
+        events.each_with_index do |event, idx|
+          if (idx + 1) < events.size
+            next_event = events[idx + 1]
+            if event[:thru_time_in_secs] > next_event[:from_time_in_secs]
+              conflict_from_time_in_secs = next_event[:from_time_in_secs]
+              conflict_thru_time_in_secs = [event[:thru_time_in_secs], next_event[:thru_time_in_secs]].min
               arr << {
                 first_event_id: event[:event_object][:id],
                 second_event_id: next_event[:event_object][:id],
-                start_time: conflict_start_time,
-                end_time: conflict_end_time,
-                start_date: Time.at(conflict_start_time),
-                end_date: Time.at(conflict_end_time)
+                from_time_in_secs: conflict_from_time_in_secs,
+                thru_time_in_secs: conflict_thru_time_in_secs,
+                from_time: DateTime.strptime("#{conflict_from_time_in_secs}", '%s'),
+                thru_time: DateTime.strptime("#{conflict_thru_time_in_secs}", '%s')
               }
             end
           end
@@ -63,11 +67,11 @@ module Gouge
         arr
       end
 
-      def event_to_hash(obj, start_time, end_time)
+      def event_to_hash(obj, from_time_in_secs, thru_time_in_secs)
         {
           event_object: obj,
-          start_time: start_time,
-          end_time: end_time
+          from_time_in_secs: from_time_in_secs,
+          thru_time_in_secs: thru_time_in_secs
         }
       end
     end
@@ -75,57 +79,57 @@ module Gouge
     # Conditionals
     # --------------------
 
-    def no_repeat?
-      self.repeat_type == NO_REPEAT
+    def no_recurrence?
+      self.recurrence_type == "NO_RECURRENCE"
     end
 
-    def repeat_every_n_days?
-      self.repeat_type == REPEAT_TYPE_EVERY_N_DAYS
+    def recur_every_n_days?
+      self.recurrence_type == "EVERY_N_DAYS"
     end
 
-    def repeat_every_n_weeks?
-      self.repeat_type == REPEAT_TYPE_EVERY_N_WEEKS
+    def recur_every_n_weeks?
+      self.recurrence_type == "EVERY_N_WEEKS"
     end
 
-    def repeat_every_n_months?
-      self.repeat_type == REPEAT_TYPE_EVERY_N_MONTHS
+    def recur_every_n_months?
+      self.recurrence_type == "EVERY_N_MONTHS"
     end
 
-    def repeat_every_n_years?
-      self.repeat_type == REPEAT_TYPE_EVERY_N_YEARS
+    def recur_every_n_years?
+      self.recurrence_type == "EVERY_N_YEARS"
     end
 
-    def repeat_every_days_of_week?
-      self.repeat_type == REPEAT_TYPE_EVERY_DAYS_OF_WEEK
+    def recur_every_days_of_week?
+      self.recurrence_type == "EVERY_DAYS_OF_WEEK"
     end
 
     # Event Formulae
     # --------------------
 
     # Returns collection of events that was derived from a schedule.
-    # @param start_time [Integer] start of time range in seconds
-    # @param end_time [Integer] end of time range in seconds
-    def events(start_time = nil, end_time = nil, filter_events = [])
-      # if start_time is nil, use from_date attribute from the schedule.
-      start_time = (start_time.present? ? Time.at(start_time) : self.from_date).beginning_of_day.to_i
+    # @param from_time_in_secs [Integer] from time range in seconds
+    # @param thru_time_in_secs [Integer] thru time range in seconds
+    def events(from_time_in_secs = nil, thru_time_in_secs = nil, filter_events = [])
+      # If from_time_in_secs is nil, use from_time attribute from the model.
+      from_time_in_secs = DateTime.strptime("#{from_time_in_secs}", '%s').beginning_of_day.to_i if from_time_in_secs
+      from_time_in_secs ||= self.from_time.beginning_of_day.to_i
 
-      # if end_time is nil, use repeat_end attribute from the schedule.
-      # note: end_time may still nil if no repeat is specified.
-      # note: end_time is exclusive. substract with DAY_IN_SECOND to
+      # If thru_time_in_secs is nil, use recurrence_end attribute from the model.
+      # note: thru_time_in_secs may still be nil if no recurrence_end is specified
+      # note: thru_time_in_secs is exclusive. substract with DAY_IN_SECONDS to
       # become inclusive (see arshaw fullcalendar docs)
-      end_time = [
-        (end_time.present? ? Time.at(end_time).end_of_day.to_i - DAY_IN_SECOND : nil),
-        self.repeat_end.try(:end_of_day).try(:to_i)
-      ].compact.min
+      thru_time_in_secs = DateTime.strptime("#{thru_time_in_secs}", '%s').end_of_day.to_i - DAY_IN_SECONDS if thru_time_in_secs
+      thru_time_in_secs = [thru_time_in_secs, self.recurrence_end.try(:end_of_day).try(:to_i)].compact.min
 
       arr = []
-      self.fetch_events_time(start_time, end_time).each do |e|
-        event_start_time = e + self.from_date.hour * HOUR_IN_SECOND +
-          self.from_date.min * MINUTE_IN_SECOND
-        event_end_time = event_start_time + self.duration
+      self.fetch_events_time(from_time_in_secs, thru_time_in_secs).each do |e|
+        event_from_time_in_secs = e +
+          (self.from_time.hour * HOUR_IN_SECONDS) +
+          (self.from_time.min * MINUTE_IN_SECONDS)
+        event_thru_time_in_secs = event_from_time_in_secs + self.duration
 
-        unless filter_events.include? event_start_time
-          arr << self.class.event_to_hash(self, event_start_time, event_end_time)
+        unless filter_events.include? event_from_time_in_secs
+          arr << self.class.event_to_hash(self, event_from_time_in_secs, event_thru_time_in_secs)
         end
       end
 
@@ -133,75 +137,73 @@ module Gouge
     end
 
     # Returns collection of events time in seconds
-    # @param lfe [Integer] left edge / start of time range (in seconds)
-    # @param rge [Integer] right edge / end of time range (in seconds)
+    # @param lfe [Integer] left edge / from time range in seconds
+    # @param rge [Integer] right edge / thru time range in seconds
     def fetch_events_time(lfe, rge)
-      # collect from_date beginning of day (in seconds)
-      frd = self.from_date.beginning_of_day.to_i
+      # collect from_time beginning of day (in seconds)
+      frt = self.from_time.beginning_of_day.to_i
 
-      case self.repeat_type
-      when NO_REPEAT
-        self.no_repeat_dates(lfe, rge, frd)
-      when REPEAT_TYPE_EVERY_N_DAYS
-        self.repeat_every_day_dates(lfe, rge, frd)
-      when REPEAT_TYPE_EVERY_N_WEEKS
-        self.repeat_every_week_dates(lfe, rge, frd)
-      when REPEAT_TYPE_EVERY_N_MONTHS
-        self.repeat_every_month_dates(lfe, rge, frd)
-      when REPEAT_TYPE_EVERY_N_YEARS
-        self.repeat_every_year_dates(lfe, rge, frd)
-      when REPEAT_TYPE_EVERY_DAYS_OF_WEEK
-        self.repeat_every_days_of_week_dates(lfe, rge, frd)
+      case self.recurrence_type
+      when "NO_RECURRENCE"
+        self.no_recurrence_dates(lfe, rge, frt)
+      when "EVERY_N_DAYS"
+        self.recur_every_n_days_dates(lfe, rge, frt)
+      when "EVERY_N_WEEKS"
+        self.recur_every_n_weeks_dates(lfe, rge, frt)
+      when "EVERY_N_MONTHS"
+        self.recur_every_n_months_dates(lfe, rge, frt)
+      when "EVERY_N_YEARS"
+        self.recur_every_n_years_dates(lfe, rge, frt)
+      when "EVERY_DAYS_OF_WEEK"
+        self.recur_every_days_of_week_dates(lfe, rge, frt)
       else
         []
       end
     end
 
     protected
-
-      # no-repeat doesn't have repeat_end
-      # @param lfe [Integer] left edge / start of time range (in seconds)
-      # @param rge [Integer] right edge / end of time range (in seconds)
-      # @param frd [Integer] start of the event (from_date) (in seconds)
-      def no_repeat_dates(lfe, rge, frd)
-        # in no-repeat rge maybe null, therefore set rge with
-        # from_date end of day.
-        rge ||= self.from_date.end_of_day.to_i
-        return [frd] if lfe <= frd && frd <= rge
+      # @param lfe [Integer] left edge / from time range in seconds
+      # @param rge [Integer] right edge / thru time range in seconds
+      # @param frt [Integer] start of the event (from_time) (in seconds)
+      def no_recurrence_dates(lfe, rge, frt)
+        # in no-recurrence rge maybe null, therefore set rge with
+        # from_time end of day.
+        rge ||= self.from_time.end_of_day.to_i
+        return [frt] if lfe <= frt && frt <= rge
         []
       end
 
-      # @param lfe [Integer] left edge / start of time range (in seconds)
-      # @param rge [Integer] right edge / end of time range (in seconds)
-      # @param frd [Integer] start of the event (from_date) (in seconds)
-      def repeat_every_day_dates(lfe, rge, frd)
-        interval = self.repeat_every_n_days
+      # @param lfe [Integer] left edge / from time range in seconds
+      # @param rge [Integer] right edge / thru time range in seconds
+      # @param frt [Integer] start of the event (from_time) (in seconds)
+      def recur_every_n_days_dates(lfe, rge, frt)
+        interval = self.recur_every_n_days
         arr = []
-        (frd..rge).step(interval * DAY_IN_SECOND) do |cis|
+        (frt..rge).step(interval * DAY_IN_SECONDS) do |cis|
           arr << cis if lfe <= cis
         end
         arr
       end
 
-      # @param lfe [Integer] left edge / start of time range (in seconds)
-      # @param rge [Integer] right edge / end of time range (in seconds)
-      # @param frd [Integer] start of the event (from_date) (in seconds)
-      def repeat_every_week_dates(lfe, rge, frd)
-        interval = self.repeat_every_n_weeks
+      # @param lfe [Integer] left edge / from time range in seconds
+      # @param rge [Integer] right edge / thru time range in seconds
+      # @param frt [Integer] start of the event (from_time) (in seconds)
+      def recur_every_n_weeks_dates(lfe, rge, frt)
+        interval = self.recur_every_n_weeks
         arr = []
-        (frd..rge).step(interval * WEEK_IN_SECOND) do |cis|
+        (frt..rge).step(interval * WEEK_IN_SECONDS) do |cis|
           arr << cis if lfe <= cis
         end
         arr
       end
 
-      # @param lfe [Integer] left edge / start of time range (in seconds)
-      # @param rge [Integer] right edge / end of time range (in seconds)
-      # @param frd [Integer] start of the event (from_date) (in seconds)
-      def repeat_every_month_dates(lfe, rge, frd)
-        interval = self.repeat_every_n_months
+      # @param lfe [Integer] left edge / from time range in seconds
+      # @param rge [Integer] right edge / thru time range in seconds
+      # @param frt [Integer] start of the event (from_time) (in seconds)
+      def recur_every_n_months_dates(lfe, rge, frt)
+        interval = self.recur_every_n_months
         arr = []
-        cis = frd
+        cis = frt
         until cis > rge
           arr << cis if lfe <= cis
           cis = (interval.month.from_now DateTime.strptime("#{cis}",'%s')).to_i
@@ -209,13 +211,13 @@ module Gouge
         arr
       end
 
-      # @param lfe [Integer] left edge / start of time range (in seconds)
-      # @param rge [Integer] right edge / end of time range (in seconds)
-      # @param frd [Integer] start of the event (from_date) (in seconds)
-      def repeat_every_year_dates(lfe, rge, frd)
-        interval = self.repeat_every_n_years
+      # @param lfe [Integer] left edge / from time range in seconds
+      # @param rge [Integer] right edge / thru time range in seconds
+      # @param frt [Integer] start of the event (from_time) (in seconds)
+      def recur_every_n_years_dates(lfe, rge, frt)
+        interval = self.recur_every_n_years
         arr = []
-        cis = frd
+        cis = frt
         until cis > rge
           arr << cis if lfe <= cis
           cis = (interval.year.from_now DateTime.strptime("#{cis}", '%s')).to_i
@@ -223,19 +225,19 @@ module Gouge
         arr
       end
 
-      # @param lfe [Integer] left edge / start of time range (in seconds)
-      # @param rge [Integer] right edge / end of time range (in seconds)
-      # @param frd [Integer] start of the event (from_date) (in seconds)
-      def repeat_every_days_of_week_dates(lfe, rge, frd)
-        wdays = self.repeat_every_days_of_week.split(',').collect(&:to_i)
+      # @param lfe [Integer] left edge / from time range in seconds
+      # @param rge [Integer] right edge / thru time range in seconds
+      # @param frt [Integer] start of the event (from_time) (in seconds)
+      def recur_every_days_of_week_dates(lfe, rge, frt)
+        wdays = self.recur_every_days_of_week.split(',').collect(&:to_i)
         arr = []
         # Iterate each single day from wdays
         wdays.each do |wday|
           # First wday date after given date
-          cis = frd + ( ( ( wday - self.from_date.wday ) % 7 ) * DAY_IN_SECOND)
+          cis = frt + (((wday - self.from_time.wday) % 7) * DAY_IN_SECONDS)
           until cis > rge
             arr << cis if lfe <= cis
-            cis += WEEK_IN_SECOND
+            cis += WEEK_IN_SECONDS
           end
         end
         arr
@@ -245,12 +247,12 @@ end
 
 class ActiveRecord::Base
   def self.acts_as_recurring_event(options = {})
-    validates_presence_of :repeat_end, unless: :no_repeat?
-    validates_presence_of :repeat_every_n_days, if: :repeat_every_n_days?
-    validates_presence_of :repeat_every_n_weeks, if: :repeat_every_n_weeks?
-    validates_presence_of :repeat_every_n_months, if: :repeat_every_n_months?
-    validates_presence_of :repeat_every_n_years, if: :repeat_every_n_years?
-    validates_presence_of :repeat_every_days_of_week, if: :repeat_every_days_of_week?
+    validates :recurrence_end, presence: true, unless: :no_recurrence?
+    validates :recur_every_n_days, presence: true, if: :recur_every_n_days?
+    validates :recur_every_n_weeks, presence: true, if: :recur_every_n_weeks?
+    validates :recur_every_n_months, presence: true, if: :recur_every_n_months?
+    validates :recur_every_n_years, presence: true, if: :recur_every_n_years?
+    validates :recur_every_days_of_week, presence: true, if: :recur_every_days_of_week?
     include ::Gouge::RecurringEvent
   end
 end
