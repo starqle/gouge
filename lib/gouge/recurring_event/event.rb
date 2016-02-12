@@ -26,19 +26,21 @@ module Gouge
 
       def initialize(ref_obj, from_time, thru_time)
         @ref_obj = ref_obj
-        @from_time_in_secs = self.convert_to_secs(from_time)
-        @thru_time_in_secs = self.convert_to_secs(thru_time)
+        @from_time_in_secs = self.class.convert_to_secs(from_time)
+        @thru_time_in_secs = self.class.convert_to_secs(thru_time)
       end
 
       def self.convert_to_secs(time)
-        case time.class
-        when DateTime
+        case time.class.to_s
+        when "DateTime"
           time.strftime('%s')
-        when Time
+        when "Time"
           time.strftime('%s')
-        when Integer
+        when "ActiveSupport::TimeWithZone"
+          time.strftime('%s')
+        when "Fixnum"
           time
-        when NilClass
+        when "NilClass"
           nil
         else
           raise "Cannot convert to secs, unknown object class!"
@@ -46,14 +48,16 @@ module Gouge
       end
 
       def self.convert_to_datetime(time)
-        case time.class
-        when DateTime
+        case time.class.to_s
+        when "DateTime"
           time
-        when Time
+        when "Time"
           time.to_datetime
-        when Integer
+        when "ActiveSupport::TimeWithZone"
+          time.to_datetime
+        when "Fixnum"
           DateTime.strptime("#{time}", '%s')
-        when NilClass
+        when "NilClass"
           nil
         else
           raise "Cannot convert to datetime, unknown object class!"

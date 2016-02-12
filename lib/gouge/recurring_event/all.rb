@@ -19,3 +19,4 @@
 
 require 'gouge/recurring_event/acts_as_recurring_event'
 require 'gouge/recurring_event/base'
+require 'gouge/recurring_event/event'
