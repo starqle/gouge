@@ -10,25 +10,25 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/gouge.rb
-# @author Giovanni Sakti
-# @email giosakti@starqle.com
+# @file_name lib/gouge/recurring_event/acts_as_recurring_event.rb
+# @author Raymond Ralibi
+# @email ralibi@starqle.com
 # @company PT. Starqle Indonesia
-# @note Gouge
+# @note Gouge::RecurringEvent::ActsAsRecurringEvent module
 # =============================================================================
 
-require 'active_record'
-require 'active_support/concern'
-
-require 'gouge/action_controller/concerns/all'
-require 'gouge/active_model/concerns/all'
-require 'gouge/core_ext/boolean_typecast'
-require 'gouge/exceptions/all'
-require 'gouge/grid_processor'
-require 'gouge/recurring_event/all'
-require 'gouge/report_generators/xls'
-require 'gouge/shql'
-require 'gouge/sortable_tree'
-
 module Gouge
+  module RecurringEvent
+    module ActsAsRecurringEvent
+      extend ActiveSupport::Concern
+
+      module ClassMethods
+        def acts_as_recurring_event(options = {})
+          include ::Gouge::RecurringEvent::Base
+        end
+      end
+    end
+  end
 end
+
+ActiveRecord::Base.send :include, ::Gouge::RecurringEvent::ActsAsRecurringEvent

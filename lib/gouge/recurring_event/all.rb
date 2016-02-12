@@ -10,25 +10,12 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/gouge.rb
+# @file_name lib/gouge/recurring_event/all.rb
 # @author Giovanni Sakti
 # @email giosakti@starqle.com
 # @company PT. Starqle Indonesia
-# @note Gouge
+# @note Load all RecurringEvent files
 # =============================================================================
 
-require 'active_record'
-require 'active_support/concern'
-
-require 'gouge/action_controller/concerns/all'
-require 'gouge/active_model/concerns/all'
-require 'gouge/core_ext/boolean_typecast'
-require 'gouge/exceptions/all'
-require 'gouge/grid_processor'
-require 'gouge/recurring_event/all'
-require 'gouge/report_generators/xls'
-require 'gouge/shql'
-require 'gouge/sortable_tree'
-
-module Gouge
-end
+require 'gouge/recurring_event/acts_as_recurring_event'
+require 'gouge/recurring_event/base'
