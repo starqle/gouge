@@ -33,11 +33,11 @@ module Gouge
       def self.convert_to_secs(time)
         case time.class.to_s
         when "DateTime"
-          time.strftime('%s')
+          time.strftime('%s').to_i
         when "Time"
-          time.strftime('%s')
+          time.strftime('%s').to_i
         when "ActiveSupport::TimeWithZone"
-          time.strftime('%s')
+          time.strftime('%s').to_i
         when "Fixnum"
           time
         when "NilClass"
