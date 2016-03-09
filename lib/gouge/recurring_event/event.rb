@@ -40,10 +40,12 @@ module Gouge
           time.strftime('%s').to_i
         when "Fixnum"
           time
+        when "Bignum"
+          time
         when "NilClass"
           nil
         else
-          raise "Cannot convert to secs, unknown object class!"
+          raise "Cannot convert #{time.class.to_s} #{time} to secs!"
         end
       end
 
@@ -57,10 +59,12 @@ module Gouge
           time.to_datetime
         when "Fixnum"
           DateTime.strptime("#{time}", '%s')
+        when "Bignum"
+          DateTime.strptime("#{time}", '%s')
         when "NilClass"
           nil
         else
-          raise "Cannot convert to datetime, unknown object class!"
+          raise "Cannot convert #{time.class.to_s} #{time} to datetime!"
         end
       end
     end
