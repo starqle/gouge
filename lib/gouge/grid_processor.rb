@@ -287,6 +287,17 @@ module Gouge
               when 'gteqdate'
                 array.push "DATE(#{field_to_fqn(field, field_lookup)}) >= '#{DateTime.parse(v).in_time_zone.to_date}'"
 
+              when 'eqdatetime'
+                array.push "(EXTRACT(EPOCH FROM #{field_to_fqn(field, field_lookup)}) * 1000) = #{v}"
+              when 'ltdatetime'
+                array.push "(EXTRACT(EPOCH FROM #{field_to_fqn(field, field_lookup)}) * 1000) < #{v}"
+              when 'lteqdatetime'
+                array.push "(EXTRACT(EPOCH FROM #{field_to_fqn(field, field_lookup)}) * 1000) <= #{v}"
+              when 'gtdatetime'
+                array.push "(EXTRACT(EPOCH FROM #{field_to_fqn(field, field_lookup)}) * 1000) > #{v}"
+              when 'gteqdatetime'
+                array.push "(EXTRACT(EPOCH FROM #{field_to_fqn(field, field_lookup)}) * 1000) >= #{v}"
+
               when 'isnull'
                 if [1, true, 'true', 'TRUE', 'True'].include? v
                   array.push "#{field_to_fqn(field, field_lookup)} IS NULL"
