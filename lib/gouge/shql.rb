@@ -47,18 +47,30 @@ module Gouge
             query = "(#{temp[:query]})"
           else
 
-            # =======================================================================================
+            # =====================================================================================
             # TODO: @giosakti simplify this algorithm
-            # =======================================================================================
+            # =====================================================================================
 
             query_tokens = token.scan(/(?:"(?:\\.|[^"])*"|[^" ])+/)
             if (query_tokens.size != 3) && (!%w(= IN).include? query_tokens[1])
               raise "Syntax error #{token}"
             else
+              # Evaluate lhs
               lhs_join = nil
               lhs_select = nil
               lhs_query = ""
               lhs_arr = query_tokens[0].split(".")
+
+              # Identify root scope type
+              case lhs_arr[0]
+              when "subject"
+                lhs_scope = opts[:subject]
+              when "object"
+                lhs_scope = opts[:object]
+              else
+                raise "Syntax error #{token}"
+              end
+
               lhs_arr.to_enum.with_index.reverse_each do |atom, idx|
                 if idx == lhs_arr.size - 1
                   lhs_query = atom
@@ -72,37 +84,43 @@ module Gouge
                   lhs_query = "#{atom}.#{lhs_arr[lhs_arr.size - 1]}"
                   lhs_select = {"#{lhs_arr[lhs_arr.size - 1]}" => lhs_query}
                 else
-                  # If array size is 2, then we should rename object to avoid ambiguity sql statement
+                  # If array size is 2, then we should rename lhs_scope to avoid ambiguity sql statement
                   if lhs_arr.size == 2
-                    lhs_query = "#{opts[:object].table_name}.#{lhs_arr[lhs_arr.size - 1]}"
+                    lhs_query = "#{lhs_scope.table_name}.#{lhs_arr[lhs_arr.size - 1]}"
                     lhs_select = {"#{lhs_arr[lhs_arr.size - 1]}" => lhs_query}
                   end
                 end
               end
 
+              # Evaluate rhs
               rhs_query = ""
-              if query_tokens[2].start_with? "subject"
-                subject_scope = opts[:subject]
-                rhs_arr = query_tokens[2].split(".")
-                rhs_arr.each_with_index do |atom, idx|
-                  # If subject is not exist then there is no need to construct query, move along
-                  unless subject_scope
-                    rhs_query = ""
-                    next
-                  end
 
+              if query_tokens[2].start_with? "subject" || query_tokens[2].start_with? "object"
+                rhs_arr = query_tokens[2].split(".")
+
+                # Identify root scope type
+                case lhs_arr[0]
+                when "subject"
+                  rhs_scope = opts[:subject]
+                when "object"
+                  rhs_scope = opts[:object]
+                else
+                  raise "Syntax error #{token}"
+                end
+
+                rhs_arr.each_with_index do |atom, idx|
                   if idx == 0
                     # NOP
                   elsif idx > 0 && idx < (rhs_arr.size - 1)
-                    subject_scope = subject_scope.send(atom.to_sym)
+                    rhs_scope = rhs_scope.send(atom.to_sym)
                   end
 
                   if idx == (rhs_arr.size - 1)
                     if query_tokens[1] == "IN"
-                      values = subject_scope.map{|m| "'#{m.send(atom.to_sym)}'"}
+                      values = rhs_scope.map{|m| "'#{m.send(atom.to_sym)}'"}
                       rhs_query = "(#{values.join(',')})" if values.present?
                     else
-                      rhs_query = "'#{subject_scope.send(atom.to_sym)}'"
+                      rhs_query = "'#{rhs_scope.send(atom.to_sym)}'"
                     end
                   end
                 end
@@ -119,9 +137,9 @@ module Gouge
               end
             end
 
-            # =======================================================================================
+            # =====================================================================================
             # END TODO: @giosakti simplify this algorithm
-            # =======================================================================================
+            # =====================================================================================
 
           end
           operand_stack.push query
@@ -152,70 +170,90 @@ module Gouge
             result = evaluate_json(opts.merge({json_arr: token}))
           else
 
-            # =======================================================================================
+            # =====================================================================================
             # TODO: @giosakti simplify this algorithm
-            # =======================================================================================
+            # =====================================================================================
 
             query_tokens = token.scan(/(?:"(?:\\.|[^"])*"|[^" ])+/)
             if (query_tokens.size != 3) && (!%w(= IN).include? query_tokens[1])
               raise "Syntax error #{token}"
             else
+              # Evaluate lhs
               lhs_query = ""
-              object_scope = opts[:object]
               lhs_arr = query_tokens[0].split(".")
+
+              # Identify root scope type
+              case lhs_arr[0]
+              when "subject"
+                lhs_scope = opts[:subject]
+              when "object"
+                lhs_scope = opts[:object]
+              else
+                raise "Syntax error #{token}"
+              end
+
+              # Iterate and evaluate every lhs_arr element
               lhs_arr.each_with_index do |atom, idx|
                 if idx == 0
                   # NOP
                 elsif idx > 0 && idx < lhs_arr.size
-                  if object_scope.is_a? ActiveRecord::Associations::CollectionProxy
-                    object_scope = object_scope.map{ |m| m.send(atom.to_sym) }
+                  if lhs_scope.is_a? ActiveRecord::Associations::CollectionProxy
+                    lhs_scope = lhs_scope.map{ |m| m.send(atom.to_sym) }
                   else
-                    object_scope = object_scope.send(atom.to_sym)
+                    lhs_scope = lhs_scope.send(atom.to_sym)
                   end
                 end
 
-                lhs_query = object_scope
+                lhs_query = lhs_scope
               end
 
+              # Evaluate rhs
               rhs_query = ""
-              if query_tokens[2].start_with? "subject"
-                subject_scope = opts[:subject]
+
+              if query_tokens[2].start_with? "subject" || query_tokens[2].start_with? "object"
                 rhs_arr = query_tokens[2].split(".")
+
+                # Identify root scope type
+                case lhs_arr[0]
+                when "subject"
+                  rhs_scope = opts[:subject]
+                when "object"
+                  rhs_scope = opts[:object]
+                else
+                  raise "Syntax error #{token}"
+                end
+
                 rhs_arr.each_with_index do |atom, idx|
                   if idx == 0
                     # NOP
                   elsif idx > 0 && idx < rhs_arr.size
-                    if subject_scope.is_a? ActiveRecord::Associations::CollectionProxy
-                      subject_scope = subject_scope.map{ |m| m.send(atom.to_sym) }
+                    if rhs_scope.is_a? ActiveRecord::Associations::CollectionProxy
+                      rhs_scope = rhs_scope.map{ |m| m.send(atom.to_sym) }
                     else
-                      subject_scope = subject_scope.send(atom.to_sym)
+                      rhs_scope = rhs_scope.send(atom.to_sym)
                     end
                   end
 
-                  rhs_query = subject_scope
+                  rhs_query = rhs_scope
                 end
               else
                 rhs_query = query_tokens[2].gsub(/\A'|'\Z/, '')
               end
 
               if rhs_query.present?
-                if lhs_query.is_a? Array
-                  result = lhs_query.include? rhs_query
+                if query_tokens[1] == "IN"
+                  result = rhs_query.include? lhs_query
                 else
-                  if query_tokens[1] == "="
-                    result = (lhs_query == rhs_query)
-                  else
-                    result = rhs_query.include? lhs_query
-                  end
+                  result = (lhs_query == rhs_query)
                 end
               else
                 result = false
               end
             end
 
-            # =======================================================================================
+            # =====================================================================================
             # END TODO: @giosakti simplify this algorithm
-            # =======================================================================================
+            # =====================================================================================
 
           end
           operand_stack.push result
