@@ -95,7 +95,7 @@ module Gouge
               # Evaluate rhs
               rhs_query = ""
 
-              if query_tokens[2].start_with? "subject" || query_tokens[2].start_with? "object"
+              if query_tokens[2].start_with?("subject") || query_tokens[2].start_with?("object")
                 rhs_arr = query_tokens[2].split(".")
 
                 # Identify root scope type
@@ -210,7 +210,7 @@ module Gouge
               # Evaluate rhs
               rhs_query = ""
 
-              if query_tokens[2].start_with? "subject" || query_tokens[2].start_with? "object"
+              if query_tokens[2].start_with?("subject") || query_tokens[2].start_with?("object")
                 rhs_arr = query_tokens[2].split(".")
 
                 # Identify root scope type
