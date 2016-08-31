@@ -99,7 +99,7 @@ module Gouge
                 rhs_arr = query_tokens[2].split(".")
 
                 # Identify root scope type
-                case lhs_arr[0]
+                case rhs_arr[0]
                 when "subject"
                   rhs_scope = opts[:subject]
                 when "object"
@@ -214,7 +214,7 @@ module Gouge
                 rhs_arr = query_tokens[2].split(".")
 
                 # Identify root scope type
-                case lhs_arr[0]
+                case rhs_arr[0]
                 when "subject"
                   rhs_scope = opts[:subject]
                 when "object"
