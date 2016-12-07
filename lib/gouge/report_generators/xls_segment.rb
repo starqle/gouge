@@ -79,7 +79,7 @@ module Gouge
       end
 
       # Print cells
-      processed_grid.find_each do |entry|
+      processed_grid.each do |entry|
         @data << column_defs.map do |column_def|
           {
             value: entry[column_def[:field].to_sym],
