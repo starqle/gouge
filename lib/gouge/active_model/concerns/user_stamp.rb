@@ -29,15 +29,18 @@ module Gouge
     end
 
     def stamp_created_by
-      self.update_column(:created_by_id, ::Fulcrum::User.current_user_id)
+      self.update_column(:created_by_id, self.class.user_stamp_class.current_user_id)
     end
 
     def stamp_updated_by
-      self.update_column(:updated_by_id, ::Fulcrum::User.current_user_id)
+      self.update_column(:updated_by_id, self.class.user_stamp_class.current_user_id)
     end
 
     module ClassMethods
-      # nop
+      def has_user_stamp(opts = {})
+        cattr_accessor :user_stamp_class
+        self.user_stamp_class = (opts[:user_stamp_class] || ::Fulcrum::User)
+      end
     end
   end
 end

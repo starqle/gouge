@@ -46,7 +46,7 @@ module Gouge
       end
 
       username = params[:username].presence
-      user = username && ::Fulcrum::User.find_by(username: username)
+      user = username && self.class.token_authentication_class.find_by(username: username)
 
       # Notice how we use Devise.secure_compare to compare the token
       # in the database with the token given in the params, mitigating
@@ -72,17 +72,20 @@ module Gouge
 
     def set_current_user
       begin
-        ::Fulcrum::User.current_user_id = current_user.try(:id)
+        self.class.token_authentication_class.current_user_id = current_user.try(:id)
         yield
       ensure
         # Clean up var so that the thread may be recycled.
         # Note: Cleaning up on test environment will be handled by specs
-        ::Fulcrum::User.current_user_id = nil unless Rails.env.test?
+        self.class.token_authentication_class.current_user_id = nil unless Rails.env.test?
       end
     end
 
     module ClassMethods
-      # nop
+      def has_token_authentication(opts = {})
+        cattr_accessor :token_authentication_class
+        self.token_authentication_class = (opts[:token_authentication_class] || ::Fulcrum::User)
+      end
     end
   end
 end

@@ -24,11 +24,14 @@ module Gouge
     included do
       validates :app_id, presence: true
       belongs_to :app
-      scope :app_scoped, -> { where(app_id: ::Fulcrum::App.current_app_id) }
+      scope :app_scoped, -> { where(app_id: self.class.realm_app_class.current_app_id) }
     end
 
     module ClassMethods
-      # nop
+      def acts_as_realm(opts = {})
+        cattr_accessor :realm_app_class
+        self.realm_app_class = (opts[:realm_app_class] || ::Fulcrum::App)
+      end
     end
   end
 end
