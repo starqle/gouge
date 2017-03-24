@@ -60,11 +60,11 @@ module Gouge
       enable_paging = %w[FALSE False false 0 NO No no].include?(enable_paging) ? false : DEFAULT_ENABLE_PAGING
 
       # Parse parameters into correct format
-      column_defs = (column_defs.instance_of?(String) ? JSON.parse(column_defs) : column_defs).collect(&:with_indifferent_access)
+      column_defs = (column_defs.instance_of?(String) ? JSON.parse(column_defs) : column_defs).collect(&:to_h)
       page = page.to_i
       per_page = per_page.to_i
-      sort_info = (sort_info.instance_of?(String) ? JSON.parse(sort_info) : sort_info).with_indifferent_access
-      field_lookup = field_lookup.with_indifferent_access
+      sort_info = (sort_info.instance_of?(String) ? JSON.parse(sort_info) : sort_info).to_h
+      field_lookup = field_lookup.to_h
 
       # Check for client errors
       raise "Invalid per_page parameter. Valid values are #{VALID_PER_PAGES}" unless VALID_PER_PAGES.include?(per_page)
@@ -146,10 +146,10 @@ module Gouge
       sort_info ||= DEFAULT_SORT_INFO
 
       # Parse parameters into correct format
-      column_defs = (column_defs.instance_of?(String) ? JSON.parse(column_defs) : column_defs).collect(&:with_indifferent_access)
+      column_defs = (column_defs.instance_of?(String) ? JSON.parse(column_defs) : column_defs).collect(&:to_h)
       page = page.instance_of?(String) ? page.to_i : page
       per_page = per_page.instance_of?(String) ? per_page.to_i : per_page
-      sort_info = (sort_info.instance_of?(String) ? JSON.parse(sort_info) : sort_info).with_indifferent_access
+      sort_info = (sort_info.instance_of?(String) ? JSON.parse(sort_info) : sort_info).to_h
 
       # Check for client errors
       raise "Invalid per_page parameter. Valid values are #{VALID_PER_PAGES}" unless (VALID_PER_PAGES).include? per_page
@@ -244,7 +244,7 @@ module Gouge
 
         unless filter_params.nil?
           filter_params = JSON.parse(filter_params) if filter_params.instance_of? String
-          filter_params = filter_params.with_indifferent_access
+          filter_params = filter_params.to_h
 
           # Process each key-value in filter_params
           filter_params.each do |k, v|
@@ -319,7 +319,7 @@ module Gouge
       def process_order(sort_info, field_lookup = {})
         fields = sort_info['fields'].nil? ? [] : sort_info['fields']
         directions = sort_info['directions'].nil? ? [] : sort_info['directions']
-        field_lookup = field_lookup.with_indifferent_access
+        field_lookup = field_lookup.to_h
 
         if fields.length != directions.length
           raise "fields count not same as direction"

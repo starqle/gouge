@@ -30,7 +30,7 @@ module Gouge
         else
           column_defs = JSON.parse(options)
         end
-        column_defs = column_defs.collect(&:with_indifferent_access)
+        column_defs = column_defs.collect(&:to_h)
 
         # Initialize book
         book = Spreadsheet::Workbook.new

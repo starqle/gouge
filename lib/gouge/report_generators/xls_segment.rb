@@ -68,7 +68,7 @@ module Gouge
 
       # Parse parameter/option
       column_defs = JSON.parse(column_defs) if column_defs.instance_of? String
-      column_defs = column_defs.collect(&:with_indifferent_access)
+      column_defs = column_defs.collect(&:to_h)
 
       # Print header
       @data << column_defs.map do |column_def|
