@@ -82,10 +82,7 @@ module Gouge
     end
 
     module ClassMethods
-      def has_token_authentication(opts = {})
-        cattr_accessor :token_authentication_class
-        self.token_authentication_class = (opts[:token_authentication_class] || ::Fulcrum::User)
-      end
+      # NOP
     end
   end
 end

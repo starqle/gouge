@@ -19,5 +19,7 @@
 
 require 'gouge/active_model/concerns/notification'
 require 'gouge/active_model/concerns/realm'
+require 'gouge/active_model/concerns/acts_as_realm'
 require 'gouge/active_model/concerns/token_authenticable'
 require 'gouge/active_model/concerns/user_stamp'
+require 'gouge/active_model/concerns/has_user_stamp'

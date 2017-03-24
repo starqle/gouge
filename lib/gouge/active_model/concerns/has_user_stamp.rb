@@ -2,7 +2,7 @@
 # Copyright (c) 2010-2016 All Right Reserved, http://starqle.com/
 #
 # This source is subject to the Starqle Permissive License.
-# Please see the LICENSE.txt file for more information.
+# Please see the License.txt file for more information.
 # All other rights reserved.
 #
 # THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
@@ -10,13 +10,18 @@
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
 # PARTICULAR PURPOSE.
 #
-# @file_name lib/gouge/action_controller/concerns/all.rb
+# @file_name lib/gouge/active_model/concerns/has_user_stamp.rb
 # @author Giovanni Sakti
 # @email giosakti@starqle.com
 # @company PT. Starqle Indonesia
-# @note Load all action controller concerns
+# @note HasUserStamp
 # =============================================================================
 
-require 'gouge/action_controller/concerns/base_api'
-require 'gouge/action_controller/concerns/token_authentication'
-require 'gouge/action_controller/concerns/has_token_authentication'
+class << ActiveRecord::Base
+  def has_user_stamp(opts = {})
+    include Gouge::UserStamp
+
+    cattr_accessor :user_stamp_class
+    self.user_stamp_class = (opts[:user_stamp_class] || ::Fulcrum::User)
+  end
+end

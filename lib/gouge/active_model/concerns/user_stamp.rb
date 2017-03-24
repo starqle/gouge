@@ -37,10 +37,7 @@ module Gouge
     end
 
     module ClassMethods
-      def has_user_stamp(opts = {})
-        cattr_accessor :user_stamp_class
-        self.user_stamp_class = (opts[:user_stamp_class] || ::Fulcrum::User)
-      end
+      # NOP
     end
   end
 end

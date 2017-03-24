@@ -28,10 +28,7 @@ module Gouge
     end
 
     module ClassMethods
-      def acts_as_realm(opts = {})
-        cattr_accessor :realm_app_class
-        self.realm_app_class = (opts[:realm_app_class] || ::Fulcrum::App)
-      end
+      # NOP
     end
   end
 end
