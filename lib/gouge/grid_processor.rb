@@ -333,11 +333,15 @@ module Gouge
       def parse_params(params)
         case params.class.to_s
         when "ActionController::Parameters"
-          return params.to_unsafe_h
+          params.to_unsafe_h
         when "String"
-          return JSON.parse(params)
+          JSON.parse(params)
+        when "Hash"
+          params.with_indifferent_access
+        when "Array"
+          params.collect{ |c| parse_params(c) }
         else
-          return params
+          params
         end
       end
   end
