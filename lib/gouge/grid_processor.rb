@@ -47,7 +47,7 @@ module Gouge
       page = opts[:page] || DEFAULT_PAGE
       per_page = opts[:per_page] || DEFAULT_PER_PAGE
       sort_info = opts[:sort_info] || DEFAULT_SORT_INFO
-      enable_paging = opts[:enable_paging].present? ? opts[:enable_paging].to_bool : DEFAULT_ENABLE_PAGING
+      enable_paging = opts[:enable_paging].nil? ? DEFAULT_ENABLE_PAGING : opts[:enable_paging].to_bool
       join_objects = opts[:join_objects] || []
       field_lookup = opts[:field_lookup] || {}
       custom_where_query = opts[:custom_where_query] || nil
