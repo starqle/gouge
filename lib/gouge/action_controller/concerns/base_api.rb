@@ -106,7 +106,8 @@ module Gouge
         end
 
         def grid_params
-          params.slice(:klass,
+          params.to_unsafe_h.slice(
+            :klass,
             :column_defs,
             :q,
             :filter_params,
