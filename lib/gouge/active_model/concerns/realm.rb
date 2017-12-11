@@ -24,7 +24,10 @@ module Gouge
     included do
       validates :app_id, presence: true
       belongs_to :app
-      scope :app_scoped, -> { where(app_id: self.class.realm_app_class.current_app_id) }
+      scope :app_scoped, -> {
+        klass = (self.is_a? Class) ? self : self.class
+        where(app_id: klass.realm_app_class.current_app_id)
+      }
     end
 
     module ClassMethods
