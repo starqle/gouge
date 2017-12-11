@@ -224,7 +224,7 @@ module Gouge
       def process_where(column_defs, q, field_lookup, use_alias = false)
         array = []
         column_defs.each do |column_def|
-          if column_def['traversed_by_q'] == true
+          if column_def['traversed_by_q'].to_bool == true
             if use_alias
               array.push "lower(#{column_def['field']}) LIKE lower('%#{q}%')"
             else
