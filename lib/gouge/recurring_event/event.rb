@@ -38,9 +38,7 @@ module Gouge
           time.strftime('%s').to_i
         when "ActiveSupport::TimeWithZone"
           time.strftime('%s').to_i
-        when "Fixnum"
-          time
-        when "Bignum"
+        when "Integer"
           time
         when "NilClass"
           nil
@@ -57,9 +55,7 @@ module Gouge
           time.to_datetime
         when "ActiveSupport::TimeWithZone"
           time.to_datetime
-        when "Fixnum"
-          DateTime.strptime("#{time}", '%s')
-        when "Bignum"
+        when "Integer"
           DateTime.strptime("#{time}", '%s')
         when "NilClass"
           nil
