@@ -22,8 +22,8 @@ module Gouge
     extend ::ActiveSupport::Concern
 
     included do
-      belongs_to :created_by, class_name: "User"
-      belongs_to :updated_by, class_name: "User"
+      belongs_to :created_by, class_name: "User", optional: true
+      belongs_to :updated_by, class_name: "User", optional: true
       after_create :stamp_created_by
       after_save :stamp_updated_by
     end
