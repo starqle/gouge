@@ -25,3 +25,12 @@ class << ActionController::Base
     self.token_authentication_class = (opts[:token_authentication_class] || ::Fulcrum::User)
   end
 end
+
+class << ActionController::API
+  def has_token_authentication(opts = {})
+    include Gouge::TokenAuthentication
+
+    cattr_accessor :token_authentication_class
+    self.token_authentication_class = (opts[:token_authentication_class] || ::Fulcrum::User)
+  end
+end
