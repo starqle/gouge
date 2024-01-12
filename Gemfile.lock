@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    gouge (0.9.5)
+    gouge (0.9.6)
       rails (~> 5)
       spreadsheet (~> 1.1.1)
 

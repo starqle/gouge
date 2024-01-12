@@ -109,7 +109,9 @@ module Gouge
 
       # order
       order_query = process_order(sort_info, field_lookup)
-      objects = objects.reorder(order_query) unless objects.empty?
+      # Allow custom query to be passed by wrapping with Arel.sql
+      # Important: Need to make sure `order_query` is sanitized
+      objects = objects.reorder(Arel.sql(order_query)) unless objects.empty?
 
       objects
     end
