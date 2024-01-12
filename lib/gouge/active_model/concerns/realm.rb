@@ -25,7 +25,7 @@ module Gouge
       validates :app_id, presence: true
       belongs_to :app
       scope :app_scoped, -> {
-        klass = (self.is_a? Class) ? self : self.class
+        klass = self.respond_to?(:klass) ? self.klass : self
         where(app_id: klass.realm_app_class.current_app_id)
       }
     end
